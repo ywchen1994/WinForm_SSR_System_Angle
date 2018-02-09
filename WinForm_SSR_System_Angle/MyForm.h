@@ -232,7 +232,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage2->BackColor = System::Drawing::Color::DimGray;
 				 this->tabPage2->Location = System::Drawing::Point(4, 22);
 				 this->tabPage2->Name = L"tabPage2";
-				 this->tabPage2->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage2->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage2->Size = System::Drawing::Size(1371, 621);
 				 this->tabPage2->TabIndex = 1;
 				 this->tabPage2->Text = L"圖";
@@ -248,7 +248,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage1->Controls->Add(this->groupBox1);
 				 this->tabPage1->Location = System::Drawing::Point(4, 22);
 				 this->tabPage1->Name = L"tabPage1";
-				 this->tabPage1->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage1->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage1->Size = System::Drawing::Size(1371, 621);
 				 this->tabPage1->TabIndex = 0;
 				 this->tabPage1->Text = L"設定";
@@ -298,7 +298,7 @@ namespace WinForm_SSR_System_Angle {
 				 series4->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
 				 series4->Legend = L"Legend1";
 				 series4->MarkerSize = 10;
-				 series4->Name = L"Series_Radar_TBox";
+				 series4->Name = L"Series_TBox_RRadar";
 				 this->chart1->Series->Add(series1);
 				 this->chart1->Series->Add(series2);
 				 this->chart1->Series->Add(series3);
@@ -395,7 +395,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage3->Controls->Add(this->Btn_LeftBias);
 				 this->tabPage3->Location = System::Drawing::Point(4, 22);
 				 this->tabPage3->Name = L"tabPage3";
-				 this->tabPage3->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage3->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage3->Size = System::Drawing::Size(158, 75);
 				 this->tabPage3->TabIndex = 0;
 				 this->tabPage3->Text = L"左邊雷達";
@@ -457,7 +457,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage4->Controls->Add(this->Btn_RightBias);
 				 this->tabPage4->Location = System::Drawing::Point(4, 22);
 				 this->tabPage4->Name = L"tabPage4";
-				 this->tabPage4->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage4->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage4->Size = System::Drawing::Size(158, 75);
 				 this->tabPage4->TabIndex = 1;
 				 this->tabPage4->Text = L"右邊雷達";
@@ -882,7 +882,7 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_LiDAR"]->Points->Clear();
 		chart1->Series["Series_LiDAR_CLOSE"]->Points->Clear();
 		chart1->Series["Series_Radar_Angle"]->Points->Clear();
-		chart1->Series["Series_Radar_TBox"]->Points->Clear();
+		chart1->Series["Series_TBox_RRadar"]->Points->Clear();
 		lbBsdAngleT->Text = Math::Round(bsdAngle, 2).ToString();
 		vector<Pt> Pt_average;
 		if (f_getLiDARData)
@@ -949,13 +949,12 @@ namespace WinForm_SSR_System_Angle {
 			Radar_Angle_Point.y = targetDistant*Math::Cos(bsdAngle*M_PI / 180) + left_Radar_bias.y;
 		}
 		Pt L_RadarPtAtLiDAR = L_Radar2LiDAR(Pt(100 * TBox.L_RADAR_Range*Math::Cos(TBox.L_RADAR_Angle), 100 * TBox.L_RADAR_Range*Math::Sin(TBox.L_RADAR_Angle)));
-		Pt R_RadarPtAtLiDAR = R_Radar2LiDAR(Pt(100 * TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle), 100 * TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle))); \
-			Tx_CarSpeed->Text = TBox.currentSpeed.ToString();
+		Pt R_RadarPtAtLiDAR = R_Radar2LiDAR(Pt(100 * TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle), 100 * TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle))); 
+		Tx_CarSpeed->Text = TBox.currentSpeed.ToString();
 		Tx_Radar_Mode->Text = "L:" + getRadarMode(TBox.L_RADAR_Mode) + "  R:" + getRadarMode(TBox.R_RADAR_Mode);
-		chart1->Series["Series_Radar_TBox"]->Color = Color::DarkRed;
-		chart1->Series["Series_Radar_TBox"]->Points->AddXY(L_RadarPtAtLiDAR.x, L_RadarPtAtLiDAR.y);
-		chart1->Series["Series_Radar_TBox"]->Color = Color::DarkGreen;
-		chart1->Series["Series_Radar_TBox"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
+		
+		chart1->Series["Series_TBox_RRadar"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
+
 		chart1->Series["Series_Radar_Angle"]->Points->AddXY(Radar_Angle_Point.x, Radar_Angle_Point.y);
 	}
 	delegate void SetLabel(System::String^ str);
