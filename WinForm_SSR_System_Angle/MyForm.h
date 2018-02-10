@@ -22,9 +22,11 @@ namespace WinForm_SSR_System_Angle {
 	using namespace std;
 	int LiDAR_Data[722];
 	vector<Pt> LIDAR_cooridate;
+	CTBox TBox;
 	Pt LiDAR_tmpPt = Pt(0, 0);
 	Pt right_Radar_bias;
 	Pt left_Radar_bias;
+	Pt AngleRadar_Point;
 	/// <summary>
 	/// MyForm 的摘要
 	/// </summary>
@@ -75,9 +77,9 @@ namespace WinForm_SSR_System_Angle {
 		double bsdAngle = 0;
 		float AlphaBias;
 		double targetDistant;
-
 		uint format = 25;
-		CTBox TBox;
+		
+		
 #pragma region 視窗物件
 	private: System::Windows::Forms::TabPage^  tabPage2;
 	private: System::Windows::Forms::TabPage^  tabPage1;
@@ -133,9 +135,6 @@ namespace WinForm_SSR_System_Angle {
 	private: System::Windows::Forms::Label^  label7;
 	private: System::Windows::Forms::DataVisualization::Charting::Chart^  chart1;
 	private: System::Windows::Forms::Button^  Btn_Send_RadarAngle_Cmd;
-
-
-
 	private: System::IO::Ports::SerialPort^  serialPort_Radar_Angle;
 #pragma endregion
 
@@ -155,6 +154,7 @@ namespace WinForm_SSR_System_Angle {
 				 System::Windows::Forms::DataVisualization::Charting::Series^  series2 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 				 System::Windows::Forms::DataVisualization::Charting::Series^  series3 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 				 System::Windows::Forms::DataVisualization::Charting::Series^  series4 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+				 System::Windows::Forms::DataVisualization::Charting::Series^  series5 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 				 this->serialPort_LiDAR = (gcnew System::IO::Ports::SerialPort(this->components));
 				 this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 				 this->serialPort_Radar_Angle = (gcnew System::IO::Ports::SerialPort(this->components));
@@ -297,12 +297,20 @@ namespace WinForm_SSR_System_Angle {
 				 series4->ChartArea = L"ChartArea1";
 				 series4->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
 				 series4->Legend = L"Legend1";
+				 series4->MarkerColor = System::Drawing::SystemColors::MenuHighlight;
 				 series4->MarkerSize = 10;
-				 series4->Name = L"Series_TBox_RRadar";
+				 series4->MarkerStyle = System::Windows::Forms::DataVisualization::Charting::MarkerStyle::Star4;
+				 series4->Name = L"Series_TBox_LRadar";
+				 series5->ChartArea = L"ChartArea1";
+				 series5->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+				 series5->Legend = L"Legend1";
+				 series5->MarkerSize = 10;
+				 series5->Name = L"Series_TBox_RRadar";
 				 this->chart1->Series->Add(series1);
 				 this->chart1->Series->Add(series2);
 				 this->chart1->Series->Add(series3);
 				 this->chart1->Series->Add(series4);
+				 this->chart1->Series->Add(series5);
 				 this->chart1->Size = System::Drawing::Size(1200, 600);
 				 this->chart1->TabIndex = 8;
 				 this->chart1->Text = L"圖";
@@ -815,7 +823,7 @@ namespace WinForm_SSR_System_Angle {
 				return;
 			}
 			bsdAngle = ((bufferBsd[9] + bufferBsd[10] * 256) - 10000) / 100.0;
-
+			AngleRadar_Point = Pt(targetDistant*Math::Cos(bsdAngle*M_PI / 180.f), targetDistant*Math::Sin(bsdAngle*M_PI / 180.f));
 
 		}
 		if (serialPort_Radar_Angle->BytesToRead >= 24)
@@ -823,6 +831,13 @@ namespace WinForm_SSR_System_Angle {
 			serialPort_Radar_Angle->DiscardInBuffer();// To Flush the BSD Data  
 		}
 
+	}
+	private:Pt CoordinateRotation(double degree,Pt P)
+	{
+		Pt Ans;
+		Ans.x = cos(degree*M_PI / 180)*P.x + sin(degree*M_PI / 180)*P.y;
+		Ans.y = -sin(degree*M_PI / 180)*P.x + cos(degree*M_PI / 180)*P.y;
+		return Ans;
 	}
 	private: System::Void serialPort_Tbox_DataReceived(System::Object^  sender, System::IO::Ports::SerialDataReceivedEventArgs^  e) {
 		cli::array<System::Byte>^bTboxData = gcnew cli::array<Byte>(format);
@@ -842,15 +857,16 @@ namespace WinForm_SSR_System_Angle {
 				TBox.L_RADAR_Mode = bTboxData[14];
 				TBox.L_RADAR_ALert = bTboxData[15];
 				TBox.L_RADAR_Range = bTboxData[16];
-				TBox.L_RADAR_Speed = bTboxData[17];
+				TBox.L_RADAR_Speed = bTboxData[17]-127;
 				TBox.L_RADAR_Angle = bTboxData[18]-127;
-
+				TBox.L_RADAR_Point = Pt(TBox.L_RADAR_Range*Math::Cos(TBox.L_RADAR_Angle), TBox.L_RADAR_Range*Math::Sin(TBox.L_RADAR_Angle));
 
 				TBox.R_RADAR_Mode = bTboxData[19];
 				TBox.R_RADAR_ALert = bTboxData[20];
 				TBox.R_RADAR_Range = bTboxData[21];
-				TBox.R_RADAR_Speed = bTboxData[22];
+				TBox.R_RADAR_Speed = bTboxData[22]-127;
 				TBox.R_RADAR_Angle = bTboxData[23]-127;
+				TBox.R_RADAR_Point = Pt(TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle), TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle));
 			}
 
 		}
@@ -883,6 +899,7 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_LiDAR_CLOSE"]->Points->Clear();
 		chart1->Series["Series_Radar_Angle"]->Points->Clear();
 		chart1->Series["Series_TBox_RRadar"]->Points->Clear();
+		chart1->Series["Series_TBox_LRadar"]->Points->Clear();
 		lbBsdAngleT->Text = Math::Round(bsdAngle, 2).ToString();
 		vector<Pt> Pt_average;
 		if (f_getLiDARData)
@@ -939,22 +956,25 @@ namespace WinForm_SSR_System_Angle {
 		Pt Radar_Angle_Point;
 		if (ckBox_RadarR->Checked)
 		{
-			Radar_Angle_Point.x = targetDistant*Math::Cos(bsdAngle*M_PI / 180) + right_Radar_bias.y;
-			Radar_Angle_Point.y = targetDistant*Math::Sin(bsdAngle*M_PI / 180) + right_Radar_bias.x;
+			
+			Pt Rotationtmp = CoordinateRotation(-35.0f,AngleRadar_Point);
+			Radar_Angle_Point.x = Rotationtmp.y + right_Radar_bias.y;
+			Radar_Angle_Point.y = Rotationtmp.x + right_Radar_bias.x;
 		}
 		else
 		{
-			
-			Radar_Angle_Point.x = -targetDistant*Math::Sin(bsdAngle*M_PI / 180) + left_Radar_bias.x;
-			Radar_Angle_Point.y = targetDistant*Math::Cos(bsdAngle*M_PI / 180) + left_Radar_bias.y;
+			Pt Rotation = CoordinateRotation(-125.0f, AngleRadar_Point);
+	
+			Radar_Angle_Point.x = Rotation.x + left_Radar_bias.x;
+			Radar_Angle_Point.y = Rotation.y + left_Radar_bias.y;
 		}
 		Pt L_RadarPtAtLiDAR = L_Radar2LiDAR(Pt(100 * TBox.L_RADAR_Range*Math::Cos(TBox.L_RADAR_Angle), 100 * TBox.L_RADAR_Range*Math::Sin(TBox.L_RADAR_Angle)));
-		Pt R_RadarPtAtLiDAR = R_Radar2LiDAR(Pt(100 * TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle), 100 * TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle))); 
+	    Pt R_RadarPtAtLiDAR = R_Radar2LiDAR(Pt(100 * TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle), 100 * TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle))); 
 		Tx_CarSpeed->Text = TBox.currentSpeed.ToString();
 		Tx_Radar_Mode->Text = "L:" + getRadarMode(TBox.L_RADAR_Mode) + "  R:" + getRadarMode(TBox.R_RADAR_Mode);
 		
 		chart1->Series["Series_TBox_RRadar"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
-
+		chart1->Series["Series_TBox_LRadar"]->Points->AddXY(L_RadarPtAtLiDAR.x, L_RadarPtAtLiDAR.y);
 		chart1->Series["Series_Radar_Angle"]->Points->AddXY(Radar_Angle_Point.x, Radar_Angle_Point.y);
 	}
 	delegate void SetLabel(System::String^ str);
@@ -1062,8 +1082,11 @@ namespace WinForm_SSR_System_Angle {
 		serialPort_Radar_Angle->Close();
 	}
 	private: System::Void Btn_RightBias_Click(System::Object^  sender, System::EventArgs^  e) {
-		right_Radar_bias.x = LiDAR_tmpPt.y - targetDistant*Math::Cos(bsdAngle*M_PI / 180.0f);
-		right_Radar_bias.y = LiDAR_tmpPt.x - targetDistant*Math::Sin(bsdAngle*M_PI / 180.0f);
+		Pt R_Radar_R125 = CoordinateRotation(-125.0f, AngleRadar_Point);
+		right_Radar_bias.x = LiDAR_tmpPt.x - R_Radar_R125.y;
+		right_Radar_bias.y = LiDAR_tmpPt.y - R_Radar_R125.x;
+
+
 		tx_RRadarBias_X->Text = Math::Round(right_Radar_bias.x, 2).ToString();
 		tx_RRadarBias_Y->Text = Math::Round(right_Radar_bias.y, 2).ToString();
 		f_getRRadarBias = true;
@@ -1074,8 +1097,9 @@ namespace WinForm_SSR_System_Angle {
 		ckBox_RadarR->Checked = true;
 	}
 	private: System::Void Btn_LeftBias_Click(System::Object^  sender, System::EventArgs^  e) {
-		left_Radar_bias.x = LiDAR_tmpPt.x + targetDistant*Math::Sin(bsdAngle*M_PI / 180.0f);
-		left_Radar_bias.y = LiDAR_tmpPt.y - targetDistant*Math::Cos(bsdAngle*M_PI / 180.0f);
+		Pt Ration90 = CoordinateRotation(-90, AngleRadar_Point);
+		left_Radar_bias.x = LiDAR_tmpPt.x - Ration90.x;
+		left_Radar_bias.y = LiDAR_tmpPt.y - Ration90.y;
 		tx_LRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
 		tx_LRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
 		f_getLRadarBias = true;
@@ -1088,15 +1112,17 @@ namespace WinForm_SSR_System_Angle {
 	private:Pt L_Radar2LiDAR(Pt P)
 	{
 		Pt Ans;
-		Ans.x = P.x*Math::Cos(-125.0f * M_PI / 180.0f) + P.y*Math::Sin(-125.0f * M_PI / 180.0f) + left_Radar_bias.x;
-		Ans.y = -P.x*Math::Sin(-125.0f * M_PI / 180.0f) + P.y*Math::Cos(-125.0f * M_PI / 180.0f) + left_Radar_bias.y;
+		Pt Rotation = CoordinateRotation(-125, P);
+		Ans.x = Rotation.x + left_Radar_bias.x;
+		Ans.y = Rotation.y + left_Radar_bias.y;
 		return Ans;
 	}
 	private:Pt R_Radar2LiDAR(Pt P)
 	{
 		Pt Ans;
-		Ans.x = P.x*Math::Cos(-35.0f * M_PI / 180.0f) + P.y*Math::Sin(-35.0f * M_PI / 180.0f) + right_Radar_bias.x;
-		Ans.y = -P.x*Math::Sin(-35.0f * M_PI / 180.0f) + P.y*Math::Cos(-35.0f * M_PI / 180.0f) + right_Radar_bias.y;
+		Pt Rotationtmp = CoordinateRotation(-35.0f,P);
+		Ans.x = Rotationtmp.y+ right_Radar_bias.x;
+		Ans.y = Rotationtmp.x+ right_Radar_bias.y;
 		return Ans;
 	}
 #pragma region 聚類
