@@ -165,6 +165,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->label7 = (gcnew System::Windows::Forms::Label());
 				 this->chart1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Chart());
 				 this->groupBox4 = (gcnew System::Windows::Forms::GroupBox());
+				 this->Btn_Tbox_Close = (gcnew System::Windows::Forms::Button());
 				 this->Tx_Radar_Mode = (gcnew System::Windows::Forms::Label());
 				 this->cBox_TBox = (gcnew System::Windows::Forms::ComboBox());
 				 this->Btn_Tbox_Connect = (gcnew System::Windows::Forms::Button());
@@ -204,7 +205,6 @@ namespace WinForm_SSR_System_Angle {
 				 this->Btn_LiDAR_DisConnect = (gcnew System::Windows::Forms::Button());
 				 this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 				 this->serialPort_Tbox = (gcnew System::IO::Ports::SerialPort(this->components));
-				 this->Btn_Tbox_Close = (gcnew System::Windows::Forms::Button());
 				 this->tabPage1->SuspendLayout();
 				 (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->chart1))->BeginInit();
 				 this->groupBox4->SuspendLayout();
@@ -340,6 +340,16 @@ namespace WinForm_SSR_System_Angle {
 				 this->groupBox4->TabIndex = 7;
 				 this->groupBox4->TabStop = false;
 				 this->groupBox4->Text = L"TBox";
+				 // 
+				 // Btn_Tbox_Close
+				 // 
+				 this->Btn_Tbox_Close->Location = System::Drawing::Point(136, 74);
+				 this->Btn_Tbox_Close->Name = L"Btn_Tbox_Close";
+				 this->Btn_Tbox_Close->Size = System::Drawing::Size(100, 29);
+				 this->Btn_Tbox_Close->TabIndex = 12;
+				 this->Btn_Tbox_Close->Text = L"Ãö³¬";
+				 this->Btn_Tbox_Close->UseVisualStyleBackColor = true;
+				 this->Btn_Tbox_Close->Click += gcnew System::EventHandler(this, &MyForm::Btn_Tbox_Close_Click);
 				 // 
 				 // Tx_Radar_Mode
 				 // 
@@ -764,16 +774,6 @@ namespace WinForm_SSR_System_Angle {
 				 // 
 				 this->serialPort_Tbox->DataReceived += gcnew System::IO::Ports::SerialDataReceivedEventHandler(this, &MyForm::serialPort_Tbox_DataReceived);
 				 // 
-				 // Btn_Tbox_Close
-				 // 
-				 this->Btn_Tbox_Close->Location = System::Drawing::Point(136, 74);
-				 this->Btn_Tbox_Close->Name = L"Btn_Tbox_Close";
-				 this->Btn_Tbox_Close->Size = System::Drawing::Size(100, 29);
-				 this->Btn_Tbox_Close->TabIndex = 12;
-				 this->Btn_Tbox_Close->Text = L"Ãö³¬";
-				 this->Btn_Tbox_Close->UseVisualStyleBackColor = true;
-				 this->Btn_Tbox_Close->Click += gcnew System::EventHandler(this, &MyForm::Btn_Tbox_Close_Click);
-				 // 
 				 // MyForm
 				 // 
 				 this->AutoScaleDimensions = System::Drawing::SizeF(8, 15);
@@ -962,7 +962,7 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_LiDAR"]->Points->Clear();
 		chart1->Series["Series_LiDAR_CLOSE"]->Points->Clear();
 		chart1->Series["Series_Radar_Angle"]->Points->Clear();
-		chart1->Series["Series_TBox_RRadar"]->Points->Clear();
+		//chart1->Series["Series_TBox_RRadar"]->Points->Clear();
 		chart1->Series["Series_TBox_LRadar"]->Points->Clear();
 		lbBsdAngleT->Text = Math::Round(bsdAngle, 2).ToString();
 		vector<Pt> Pt_average;
@@ -999,10 +999,10 @@ namespace WinForm_SSR_System_Angle {
 				Pt_average[i] = sum;
 			}
 			Pt P;
-			double minDistant = 100000;
+			double minDistant = 1000000;
 			for (uint i = 0; i < Pt_average.size(); i++)
 			{
-				if (pow(Pt_average[i].x, 2) + pow(Pt_average[i].y, 2) < minDistant && pow(Pt_average[i].x, 2) + pow(Pt_average[i].y, 2) != 0)
+				if (pow(Pt_average[i].x, 2) + pow(Pt_average[i].y, 2) < minDistant && ((pow(Pt_average[i].x, 2) + pow(Pt_average[i].y, 2))!= 0))
 				{
 					minDistant = pow(Pt_average[i].x, 2) + pow(Pt_average[i].y, 2);
 					P = Pt_average[i];
@@ -1038,6 +1038,7 @@ namespace WinForm_SSR_System_Angle {
 		Tx_Radar_Mode->Text = "L:" + getRadarMode(TBox.L_RADAR_Mode) + "  R:" + getRadarMode(TBox.R_RADAR_Mode);
 
 		chart1->Series["Series_TBox_RRadar"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
+		chart1->Series["Series_TBox_RRadar"]->Label= "(" + Math::Round(R_RadarPtAtLiDAR.x, 2).ToString() + " , " + Math::Round(R_RadarPtAtLiDAR.y, 2).ToString() +   ")";
 		chart1->Series["Series_TBox_LRadar"]->Points->AddXY(L_RadarPtAtLiDAR.x, L_RadarPtAtLiDAR.y);
 		chart1->Series["Series_Radar_Angle"]->Points->AddXY(Radar_Angle_Point.x, Radar_Angle_Point.y);
 	}
@@ -1143,6 +1144,7 @@ namespace WinForm_SSR_System_Angle {
 		serialPort_Radar_Angle->Write(cmd, 0, 12);
 	}
 	private: System::Void Btn_RadarAngle_DisConnect_Click(System::Object^  sender, System::EventArgs^  e) {
+		chart1->Series["Series_Radar_Angle"]->Points->Clear();
 		serialPort_Radar_Angle->Close();
 	}
 
@@ -1293,6 +1295,10 @@ namespace WinForm_SSR_System_Angle {
 		fp >>left_Radar_bias.x;
 		fp >> left_Radar_bias.y;
 		fp.close();
+		tx_LRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
+		tx_LRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
+		tx_RRadarBias_X->Text = Math::Round(right_Radar_bias.x, 2).ToString();
+		tx_RRadarBias_Y->Text = Math::Round(right_Radar_bias.y, 2).ToString();
 	}
 };
 }
