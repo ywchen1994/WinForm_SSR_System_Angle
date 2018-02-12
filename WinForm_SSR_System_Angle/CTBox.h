@@ -10,13 +10,13 @@ public:
 	int R_RADAR_Range;
 	int R_RADAR_Speed;
 	int R_RADAR_Angle;
-	Pt  R_RADAR_Point;
+	
 
 	int L_RADAR_Mode;
 	int L_RADAR_ALert;
 	int L_RADAR_Range;
 	int L_RADAR_Speed;
 	int L_RADAR_Angle;
-	Pt  L_RADAR_Point;
+
 };
 
