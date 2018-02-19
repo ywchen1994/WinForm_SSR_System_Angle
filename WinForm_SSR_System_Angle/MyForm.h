@@ -7,6 +7,8 @@
 #include "Pt.h"
 #include "CTBox.h"
 #include <fstream>
+#include<cv.h>
+#include<highgui.h>
 typedef unsigned int uint;
 namespace WinForm_SSR_System_Angle {
 
@@ -20,6 +22,7 @@ namespace WinForm_SSR_System_Angle {
 	using namespace System::IO::Ports;
 	using namespace System::Runtime::InteropServices;
 	using namespace std;
+	using namespace cv;
 	int LiDAR_Data[722];
 	vector<Pt> LIDAR_cooridate;
 	CTBox TBox;
@@ -27,6 +30,9 @@ namespace WinForm_SSR_System_Angle {
 	Pt left_Radar_bias;
 	Pt right_Radar_bias;
 	Pt AngleRadar_Point;
+	VideoCapture cap;
+	VideoWriter writer;
+	
 	/// <summary>
 	/// MyForm 的摘要
 	/// </summary>
@@ -39,6 +45,8 @@ namespace WinForm_SSR_System_Angle {
 			//
 			//TODO:  在此加入建構函式程式碼
 			//
+			cv::Size videoSize; videoSize = cv::Size((int)cap.get(CV_CAP_PROP_FRAME_WIDTH), (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT));
+			writer.open("VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, videoSize);
 			ComPortRefresh();
 			timer1->Interval = 100;
 			timer1->Start();
@@ -137,7 +145,7 @@ namespace WinForm_SSR_System_Angle {
 	private: System::Windows::Forms::DataVisualization::Charting::Chart^  chart1;
 	private: System::Windows::Forms::Button^  Btn_Send_RadarAngle_Cmd;
 	private: System::Windows::Forms::Button^  Btn_Tbox_Close;
-private: System::Windows::Forms::Label^  label9;
+	private: System::Windows::Forms::Label^  label9;
 	private: System::IO::Ports::SerialPort^  serialPort_Radar_Angle;
 #pragma endregion
 
@@ -830,18 +838,16 @@ private: System::Windows::Forms::Label^  label9;
 				TBox.currentSpeed = bTboxData[9];
 				TBox.L_RADAR_Mode = bTboxData[14];
 				TBox.L_RADAR_ALert = bTboxData[15];
-				TBox.L_RADAR_Range = bTboxData[16] ;
+				TBox.L_RADAR_Range = bTboxData[16];
 				TBox.L_RADAR_Speed = bTboxData[17] - 127;
 				TBox.L_RADAR_Angle = bTboxData[18];// -127;
-				
-			
+
+
 				TBox.R_RADAR_Mode = bTboxData[19];
 				TBox.R_RADAR_ALert = bTboxData[20];
-				TBox.R_RADAR_Range = bTboxData[21] ;
+				TBox.R_RADAR_Range = bTboxData[21];
 				TBox.R_RADAR_Speed = bTboxData[22] - 127;
 				TBox.R_RADAR_Angle = bTboxData[23];// -127;
-				
-				
 			}
 
 		}
@@ -929,6 +935,12 @@ private: System::Windows::Forms::Label^  label9;
 		chart1->Series["Series_TBox_RRadar"]->Points->Clear();
 		chart1->Series["Series_TBox_LRadar"]->Points->Clear();
 		lbBsdAngleT->Text = Math::Round(bsdAngle, 2).ToString();
+		Mat Img_Source;
+		if (cap.isOpened)
+		{
+			cap >> Img_Source;
+			writer.write(Img_Source);
+		}
 		vector<Pt> Pt_average;
 		if (f_getLiDARData)
 		{
@@ -999,7 +1011,7 @@ private: System::Windows::Forms::Label^  label9;
 		chart1->Series["Series_Radar_Angle"]->Points->AddXY(Radar_Angle_Point.x, Radar_Angle_Point.y);
 		if (TBox.R_RADAR_ALert)
 		{
-		    //fstream fp;
+			//fstream fp;
 			//fp.open("R_RadarData.txt", ios::out |ios::app);
 			//fp << TBox.R_RADAR_Range <<  " " << TBox.R_RADAR_Angle <<" "<< bsdAngle << endl;
 			//fp.close();
@@ -1020,9 +1032,9 @@ private: System::Windows::Forms::Label^  label9;
 		}
 
 		Tx_CarSpeed->Text = TBox.currentSpeed.ToString();
-		Tx_Radar_Mode->Text = "L:" + getRadarMode(TBox.L_RADAR_Mode) + "  R:" + getRadarMode(TBox.R_RADAR_Mode);		
+		Tx_Radar_Mode->Text = "L:" + getRadarMode(TBox.L_RADAR_Mode) + "  R:" + getRadarMode(TBox.R_RADAR_Mode);
 	}
-	delegate void SetLabel(System::String^ str);
+			 delegate void SetLabel(System::String^ str);
 	private:void SetLabelText(System::String^ str)
 	{
 		if (this->lbBsdAngleT->InvokeRequired)
@@ -1044,16 +1056,19 @@ private: System::Windows::Forms::Label^  label9;
 	private: System::Void Btn_Tbox_Connect_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (serialPort_Tbox->IsOpen)
 		{
+			cap.open(1);
 			serialPort_Tbox->Close();
 			Sleep(10);
 		}
-
 		serialPort_Tbox->PortName = cBox_TBox->Text;
 		serialPort_Tbox->BaudRate = 115200;
 		serialPort_Tbox->DataBits = 8;
 		serialPort_Tbox->StopBits = StopBits::One;
 		serialPort_Tbox->Parity = Parity::None;
 		serialPort_Tbox->Open();
+	}
+	private: System::Void Btn_Tbox_Close_Click(System::Object^  sender, System::EventArgs^  e) {
+		serialPort_Tbox->Close();
 	}
 	private:void ComPortRefresh(void)
 	{
@@ -1095,7 +1110,6 @@ private: System::Windows::Forms::Label^  label9;
 			serialPort_LiDAR->Write(continuous_LMS_data_manage, 0, 8);
 		}
 		t1 = clock();
-
 	}
 	private: System::Void Btn_LiDAR_DisConnect_Click(System::Object^  sender, System::EventArgs^  e) {
 		timer1->Stop();
@@ -1258,11 +1272,6 @@ private: System::Windows::Forms::Label^  label9;
 		return nclasses;
 	}
 #pragma endregion
-
-
-	private: System::Void Btn_Tbox_Close_Click(System::Object^  sender, System::EventArgs^  e) {
-		serialPort_Tbox->Close();
-	}
 	private:void LoadData()
 	{
 		fstream fp;
