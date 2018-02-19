@@ -7,8 +7,7 @@
 #include "Pt.h"
 #include "CTBox.h"
 #include <fstream>
-#include<cv.h>
-#include<highgui.h>
+
 typedef unsigned int uint;
 namespace WinForm_SSR_System_Angle {
 
@@ -22,7 +21,7 @@ namespace WinForm_SSR_System_Angle {
 	using namespace System::IO::Ports;
 	using namespace System::Runtime::InteropServices;
 	using namespace std;
-	using namespace cv;
+	//using namespace cv;
 	int LiDAR_Data[722];
 	vector<Pt> LIDAR_cooridate;
 	CTBox TBox;
@@ -30,8 +29,9 @@ namespace WinForm_SSR_System_Angle {
 	Pt left_Radar_bias;
 	Pt right_Radar_bias;
 	Pt AngleRadar_Point;
-	VideoCapture cap;
-	VideoWriter writer;
+	double LIDAR_X_cooridate[361];
+	double LIDAR_Y_cooridate[361];
+	
 	
 	/// <summary>
 	/// MyForm 的摘要
@@ -45,8 +45,7 @@ namespace WinForm_SSR_System_Angle {
 			//
 			//TODO:  在此加入建構函式程式碼
 			//
-			cv::Size videoSize; videoSize = cv::Size((int)cap.get(CV_CAP_PROP_FRAME_WIDTH), (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT));
-			writer.open("VideoTest.avi", CV_FOURCC('M', 'J', 'P', 'G'), 30, videoSize);
+		
 			ComPortRefresh();
 			timer1->Interval = 100;
 			timer1->Start();
@@ -61,8 +60,7 @@ namespace WinForm_SSR_System_Angle {
 		{
 			if (components)
 			{
-				delete[]LIDAR_X_cooridate;
-				delete[]LIDAR_Y_cooridate;
+			
 				delete components;
 			}
 		}
@@ -79,10 +77,9 @@ namespace WinForm_SSR_System_Angle {
 		int counter = 0;
 		bool f_getLiDARData = false;
 		bool f_getHeader = false;
-		bool f_getLRadarBias_d = false;
-		bool f_getRRadarBias_d = false;
-		double *LIDAR_X_cooridate = new double[361];
-		double *LIDAR_Y_cooridate = new double[361];
+		bool f_getLRadarBias = false;
+		bool f_getRRadarBias = false;
+		
 		double bsdAngle = 0;
 		float AlphaBias;
 		double targetDistant;
@@ -169,6 +166,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->serialPort_Radar_Angle = (gcnew System::IO::Ports::SerialPort(this->components));
 				 this->tabPage2 = (gcnew System::Windows::Forms::TabPage());
 				 this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
+				 this->label9 = (gcnew System::Windows::Forms::Label());
 				 this->label7 = (gcnew System::Windows::Forms::Label());
 				 this->chart1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Chart());
 				 this->groupBox4 = (gcnew System::Windows::Forms::GroupBox());
@@ -212,7 +210,6 @@ namespace WinForm_SSR_System_Angle {
 				 this->Btn_LiDAR_DisConnect = (gcnew System::Windows::Forms::Button());
 				 this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 				 this->serialPort_Tbox = (gcnew System::IO::Ports::SerialPort(this->components));
-				 this->label9 = (gcnew System::Windows::Forms::Label());
 				 this->tabPage1->SuspendLayout();
 				 (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->chart1))->BeginInit();
 				 this->groupBox4->SuspendLayout();
@@ -243,7 +240,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage2->BackColor = System::Drawing::Color::DimGray;
 				 this->tabPage2->Location = System::Drawing::Point(4, 22);
 				 this->tabPage2->Name = L"tabPage2";
-				 this->tabPage2->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage2->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage2->Size = System::Drawing::Size(1371, 621);
 				 this->tabPage2->TabIndex = 1;
 				 this->tabPage2->Text = L"圖";
@@ -260,11 +257,20 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage1->Controls->Add(this->groupBox1);
 				 this->tabPage1->Location = System::Drawing::Point(4, 22);
 				 this->tabPage1->Name = L"tabPage1";
-				 this->tabPage1->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage1->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage1->Size = System::Drawing::Size(1371, 621);
 				 this->tabPage1->TabIndex = 0;
 				 this->tabPage1->Text = L"設定";
 				 this->tabPage1->UseVisualStyleBackColor = true;
+				 // 
+				 // label9
+				 // 
+				 this->label9->AutoSize = true;
+				 this->label9->Location = System::Drawing::Point(321, 590);
+				 this->label9->Name = L"label9";
+				 this->label9->Size = System::Drawing::Size(33, 12);
+				 this->label9->TabIndex = 9;
+				 this->label9->Text = L"label9";
 				 // 
 				 // label7
 				 // 
@@ -347,7 +353,7 @@ namespace WinForm_SSR_System_Angle {
 				 // Btn_Tbox_Close
 				 // 
 				 this->Btn_Tbox_Close->Location = System::Drawing::Point(102, 59);
-				 this->Btn_Tbox_Close->Margin = System::Windows::Forms::Padding(2, 2, 2, 2);
+				 this->Btn_Tbox_Close->Margin = System::Windows::Forms::Padding(2);
 				 this->Btn_Tbox_Close->Name = L"Btn_Tbox_Close";
 				 this->Btn_Tbox_Close->Size = System::Drawing::Size(75, 23);
 				 this->Btn_Tbox_Close->TabIndex = 12;
@@ -429,7 +435,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage3->Controls->Add(this->Btn_LeftBias);
 				 this->tabPage3->Location = System::Drawing::Point(4, 22);
 				 this->tabPage3->Name = L"tabPage3";
-				 this->tabPage3->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage3->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage3->Size = System::Drawing::Size(158, 75);
 				 this->tabPage3->TabIndex = 0;
 				 this->tabPage3->Text = L"左邊雷達";
@@ -491,7 +497,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage4->Controls->Add(this->Btn_RightBias);
 				 this->tabPage4->Location = System::Drawing::Point(4, 22);
 				 this->tabPage4->Name = L"tabPage4";
-				 this->tabPage4->Padding = System::Windows::Forms::Padding(3, 3, 3, 3);
+				 this->tabPage4->Padding = System::Windows::Forms::Padding(3);
 				 this->tabPage4->Size = System::Drawing::Size(158, 75);
 				 this->tabPage4->TabIndex = 1;
 				 this->tabPage4->Text = L"右邊雷達";
@@ -737,15 +743,6 @@ namespace WinForm_SSR_System_Angle {
 				 // 
 				 this->serialPort_Tbox->DataReceived += gcnew System::IO::Ports::SerialDataReceivedEventHandler(this, &MyForm::serialPort_Tbox_DataReceived);
 				 // 
-				 // label9
-				 // 
-				 this->label9->AutoSize = true;
-				 this->label9->Location = System::Drawing::Point(321, 590);
-				 this->label9->Name = L"label9";
-				 this->label9->Size = System::Drawing::Size(33, 12);
-				 this->label9->TabIndex = 9;
-				 this->label9->Text = L"label9";
-				 // 
 				 // MyForm
 				 // 
 				 this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
@@ -935,12 +932,8 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_TBox_RRadar"]->Points->Clear();
 		chart1->Series["Series_TBox_LRadar"]->Points->Clear();
 		lbBsdAngleT->Text = Math::Round(bsdAngle, 2).ToString();
-		Mat Img_Source;
-		if (cap.isOpened)
-		{
-			cap >> Img_Source;
-			writer.write(Img_Source);
-		}
+		
+		
 		vector<Pt> Pt_average;
 		if (f_getLiDARData)
 		{
@@ -996,17 +989,17 @@ namespace WinForm_SSR_System_Angle {
 		Pt Radar_Angle_Point;
 		if (ckBox_RadarR->Checked)
 		{
-
-			Pt Rotationtmp = CoordinateRotation(-35.0f, AngleRadar_Point);
-			Radar_Angle_Point.x = Rotationtmp.y + left_Radar_bias.x;
-			Radar_Angle_Point.y = Rotationtmp.x + left_Radar_bias.y;
-		}
-		else
-		{
 			Pt Rotation = CoordinateRotation(-125.0f, AngleRadar_Point);
 
 			Radar_Angle_Point.x = Rotation.x + right_Radar_bias.x;
 			Radar_Angle_Point.y = Rotation.y + right_Radar_bias.y;
+		
+		}
+		else
+		{
+			Pt Rotationtmp = CoordinateRotation(-35.0f, AngleRadar_Point);
+			Radar_Angle_Point.x = Rotationtmp.y + left_Radar_bias.x;
+			Radar_Angle_Point.y = Rotationtmp.x + left_Radar_bias.y;
 		}
 		chart1->Series["Series_Radar_Angle"]->Points->AddXY(Radar_Angle_Point.x, Radar_Angle_Point.y);
 		if (TBox.R_RADAR_ALert)
@@ -1056,7 +1049,7 @@ namespace WinForm_SSR_System_Angle {
 	private: System::Void Btn_Tbox_Connect_Click(System::Object^  sender, System::EventArgs^  e) {
 		if (serialPort_Tbox->IsOpen)
 		{
-			cap.open(1);
+			
 			serialPort_Tbox->Close();
 			Sleep(10);
 		}
@@ -1066,6 +1059,7 @@ namespace WinForm_SSR_System_Angle {
 		serialPort_Tbox->StopBits = StopBits::One;
 		serialPort_Tbox->Parity = Parity::None;
 		serialPort_Tbox->Open();
+	
 	}
 	private: System::Void Btn_Tbox_Close_Click(System::Object^  sender, System::EventArgs^  e) {
 		serialPort_Tbox->Close();
@@ -1142,31 +1136,33 @@ namespace WinForm_SSR_System_Angle {
 		serialPort_Radar_Angle->Close();
 	}
 	private: System::Void Btn_LeftBias_Click(System::Object^  sender, System::EventArgs^  e) {
-		Pt Rotation = CoordinateRotation(-125.0f, AngleRadar_Point);
-		right_Radar_bias.x = LiDAR_tmpPt.x - Rotation.x;
-		right_Radar_bias.y = LiDAR_tmpPt.y - Rotation.y;
-		tx_LRadarBias_X->Text = Math::Round(right_Radar_bias.x, 2).ToString();
-		tx_LRadarBias_Y->Text = Math::Round(right_Radar_bias.y, 2).ToString();
-		f_getRRadarBias_d = true;
-		fstream fp;
-		fp.open("LBias.txt", ios::out);
-		fp << right_Radar_bias.x << " " << right_Radar_bias.y;
-		fp.close();
-	}
-	private: System::Void Btn_RightBias_Click(System::Object^  sender, System::EventArgs^  e) {
 		Pt Rotation = CoordinateRotation(-35.0f, AngleRadar_Point);
 		left_Radar_bias.x = LiDAR_tmpPt.x - Rotation.y;
 		left_Radar_bias.y = LiDAR_tmpPt.y - Rotation.x;
 
 
-		tx_RRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
-		tx_RRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
-		f_getLRadarBias_d = true;
+		tx_LRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
+		tx_LRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
+		f_getLRadarBias = true;
 		fstream fp;
-		fp.open("RBias.txt", ios::out);
+		fp.open("LBias.txt", ios::out);
 		fp << left_Radar_bias.x << " " << left_Radar_bias.y;
 		fp.close();
 		ckBox_RadarR->Checked = true;
+	}
+	private: System::Void Btn_RightBias_Click(System::Object^  sender, System::EventArgs^  e) {
+		
+
+		Pt Rotation = CoordinateRotation(-125.0f, AngleRadar_Point);
+		right_Radar_bias.x = LiDAR_tmpPt.x - Rotation.x;
+		right_Radar_bias.y = LiDAR_tmpPt.y - Rotation.y;
+		tx_RRadarBias_X->Text = Math::Round(right_Radar_bias.x, 2).ToString();
+		tx_RRadarBias_Y->Text = Math::Round(right_Radar_bias.y, 2).ToString();
+		f_getRRadarBias = true;
+		fstream fp;
+		fp.open("RBias.txt", ios::out);
+		fp << right_Radar_bias.x << " " << right_Radar_bias.y;
+		fp.close();
 	}
 #pragma endregion
 	private:Pt R_Radar2LiDAR(Pt P)
