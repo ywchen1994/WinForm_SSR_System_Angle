@@ -2,11 +2,12 @@
 #define _USE_MATH_DEFINES
 #include <Windows.h>
 #include"math.h"
-#include<vector>
 #include <time.h>
 #include "Pt.h"
 #include "CTBox.h"
 #include <fstream>
+#include"cv.h"
+#include"highgui.h"
 
 typedef unsigned int uint;
 namespace WinForm_SSR_System_Angle {
@@ -23,7 +24,7 @@ namespace WinForm_SSR_System_Angle {
 	using namespace std;
 	//using namespace cv;
 	int LiDAR_Data[722];
-	vector<Pt> LIDAR_cooridate;
+	cv::vector<Pt> LIDAR_cooridate;
 	CTBox TBox;
 	Pt LiDAR_tmpPt = Pt(0, 0);
 	Pt left_Radar_bias;
@@ -142,7 +143,10 @@ namespace WinForm_SSR_System_Angle {
 	private: System::Windows::Forms::DataVisualization::Charting::Chart^  chart1;
 	private: System::Windows::Forms::Button^  Btn_Send_RadarAngle_Cmd;
 	private: System::Windows::Forms::Button^  Btn_Tbox_Close;
-	private: System::Windows::Forms::Label^  label9;
+private: System::Windows::Forms::Label^  tx_TBox_RAngle;
+private: System::Windows::Forms::Label^  tx_TBox_LAngle;
+
+
 	private: System::IO::Ports::SerialPort^  serialPort_Radar_Angle;
 #pragma endregion
 
@@ -154,19 +158,19 @@ namespace WinForm_SSR_System_Angle {
 			 void InitializeComponent(void)
 			 {
 				 this->components = (gcnew System::ComponentModel::Container());
-				 System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea1 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
-				 System::Windows::Forms::DataVisualization::Charting::Legend^  legend1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Legend());
-				 System::Windows::Forms::DataVisualization::Charting::Series^  series1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
-				 System::Windows::Forms::DataVisualization::Charting::Series^  series2 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
-				 System::Windows::Forms::DataVisualization::Charting::Series^  series3 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
-				 System::Windows::Forms::DataVisualization::Charting::Series^  series4 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
-				 System::Windows::Forms::DataVisualization::Charting::Series^  series5 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+				 System::Windows::Forms::DataVisualization::Charting::ChartArea^  chartArea2 = (gcnew System::Windows::Forms::DataVisualization::Charting::ChartArea());
+				 System::Windows::Forms::DataVisualization::Charting::Legend^  legend2 = (gcnew System::Windows::Forms::DataVisualization::Charting::Legend());
+				 System::Windows::Forms::DataVisualization::Charting::Series^  series6 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+				 System::Windows::Forms::DataVisualization::Charting::Series^  series7 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+				 System::Windows::Forms::DataVisualization::Charting::Series^  series8 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+				 System::Windows::Forms::DataVisualization::Charting::Series^  series9 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
+				 System::Windows::Forms::DataVisualization::Charting::Series^  series10 = (gcnew System::Windows::Forms::DataVisualization::Charting::Series());
 				 this->serialPort_LiDAR = (gcnew System::IO::Ports::SerialPort(this->components));
 				 this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 				 this->serialPort_Radar_Angle = (gcnew System::IO::Ports::SerialPort(this->components));
 				 this->tabPage2 = (gcnew System::Windows::Forms::TabPage());
 				 this->tabPage1 = (gcnew System::Windows::Forms::TabPage());
-				 this->label9 = (gcnew System::Windows::Forms::Label());
+				 this->tx_TBox_RAngle = (gcnew System::Windows::Forms::Label());
 				 this->label7 = (gcnew System::Windows::Forms::Label());
 				 this->chart1 = (gcnew System::Windows::Forms::DataVisualization::Charting::Chart());
 				 this->groupBox4 = (gcnew System::Windows::Forms::GroupBox());
@@ -210,6 +214,7 @@ namespace WinForm_SSR_System_Angle {
 				 this->Btn_LiDAR_DisConnect = (gcnew System::Windows::Forms::Button());
 				 this->tabControl1 = (gcnew System::Windows::Forms::TabControl());
 				 this->serialPort_Tbox = (gcnew System::IO::Ports::SerialPort(this->components));
+				 this->tx_TBox_LAngle = (gcnew System::Windows::Forms::Label());
 				 this->tabPage1->SuspendLayout();
 				 (cli::safe_cast<System::ComponentModel::ISupportInitialize^>(this->chart1))->BeginInit();
 				 this->groupBox4->SuspendLayout();
@@ -247,7 +252,8 @@ namespace WinForm_SSR_System_Angle {
 				 // 
 				 // tabPage1
 				 // 
-				 this->tabPage1->Controls->Add(this->label9);
+				 this->tabPage1->Controls->Add(this->tx_TBox_LAngle);
+				 this->tabPage1->Controls->Add(this->tx_TBox_RAngle);
 				 this->tabPage1->Controls->Add(this->label7);
 				 this->tabPage1->Controls->Add(this->chart1);
 				 this->tabPage1->Controls->Add(this->groupBox4);
@@ -263,14 +269,14 @@ namespace WinForm_SSR_System_Angle {
 				 this->tabPage1->Text = L"³]©w";
 				 this->tabPage1->UseVisualStyleBackColor = true;
 				 // 
-				 // label9
+				 // tx_TBox_RAngle
 				 // 
-				 this->label9->AutoSize = true;
-				 this->label9->Location = System::Drawing::Point(321, 590);
-				 this->label9->Name = L"label9";
-				 this->label9->Size = System::Drawing::Size(33, 12);
-				 this->label9->TabIndex = 9;
-				 this->label9->Text = L"label9";
+				 this->tx_TBox_RAngle->AutoSize = true;
+				 this->tx_TBox_RAngle->Location = System::Drawing::Point(241, 591);
+				 this->tx_TBox_RAngle->Name = L"tx_TBox_RAngle";
+				 this->tx_TBox_RAngle->Size = System::Drawing::Size(33, 12);
+				 this->tx_TBox_RAngle->TabIndex = 9;
+				 this->tx_TBox_RAngle->Text = L"label9";
 				 // 
 				 // label7
 				 // 
@@ -284,53 +290,53 @@ namespace WinForm_SSR_System_Angle {
 				 // 
 				 // chart1
 				 // 
-				 chartArea1->AxisX->Interval = 100;
-				 chartArea1->AxisX->Maximum = 2000;
-				 chartArea1->AxisX->Minimum = -2000;
-				 chartArea1->AxisY->Interval = 100;
-				 chartArea1->AxisY->Maximum = 2000;
-				 chartArea1->AxisY->Minimum = 0;
-				 chartArea1->Name = L"ChartArea1";
-				 this->chart1->ChartAreas->Add(chartArea1);
-				 legend1->Name = L"Legend1";
-				 this->chart1->Legends->Add(legend1);
+				 chartArea2->AxisX->Interval = 100;
+				 chartArea2->AxisX->Maximum = 2000;
+				 chartArea2->AxisX->Minimum = -2000;
+				 chartArea2->AxisY->Interval = 100;
+				 chartArea2->AxisY->Maximum = 2000;
+				 chartArea2->AxisY->Minimum = 0;
+				 chartArea2->Name = L"ChartArea1";
+				 this->chart1->ChartAreas->Add(chartArea2);
+				 legend2->Name = L"Legend1";
+				 this->chart1->Legends->Add(legend2);
 				 this->chart1->Location = System::Drawing::Point(201, 3);
 				 this->chart1->Name = L"chart1";
-				 series1->ChartArea = L"ChartArea1";
-				 series1->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-				 series1->Legend = L"Legend1";
-				 series1->Name = L"Series_LiDAR";
-				 series2->ChartArea = L"ChartArea1";
-				 series2->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-				 series2->Color = System::Drawing::Color::Yellow;
-				 series2->Legend = L"Legend1";
-				 series2->MarkerColor = System::Drawing::Color::Yellow;
-				 series2->MarkerSize = 10;
-				 series2->Name = L"Series_LiDAR_CLOSE";
-				 series3->ChartArea = L"ChartArea1";
-				 series3->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::FastPoint;
-				 series3->Color = System::Drawing::Color::ForestGreen;
-				 series3->Legend = L"Legend1";
-				 series3->MarkerSize = 10;
-				 series3->Name = L"Series_Radar_Angle";
-				 series4->ChartArea = L"ChartArea1";
-				 series4->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-				 series4->Legend = L"Legend1";
-				 series4->MarkerColor = System::Drawing::SystemColors::MenuHighlight;
-				 series4->MarkerSize = 10;
-				 series4->MarkerStyle = System::Windows::Forms::DataVisualization::Charting::MarkerStyle::Star4;
-				 series4->Name = L"Series_TBox_LRadar";
-				 series5->ChartArea = L"ChartArea1";
-				 series5->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
-				 series5->Color = System::Drawing::Color::Black;
-				 series5->Legend = L"Legend1";
-				 series5->MarkerSize = 10;
-				 series5->Name = L"Series_TBox_RRadar";
-				 this->chart1->Series->Add(series1);
-				 this->chart1->Series->Add(series2);
-				 this->chart1->Series->Add(series3);
-				 this->chart1->Series->Add(series4);
-				 this->chart1->Series->Add(series5);
+				 series6->ChartArea = L"ChartArea1";
+				 series6->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+				 series6->Legend = L"Legend1";
+				 series6->Name = L"Series_LiDAR";
+				 series7->ChartArea = L"ChartArea1";
+				 series7->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+				 series7->Color = System::Drawing::Color::Yellow;
+				 series7->Legend = L"Legend1";
+				 series7->MarkerColor = System::Drawing::Color::Yellow;
+				 series7->MarkerSize = 10;
+				 series7->Name = L"Series_LiDAR_CLOSE";
+				 series8->ChartArea = L"ChartArea1";
+				 series8->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::FastPoint;
+				 series8->Color = System::Drawing::Color::ForestGreen;
+				 series8->Legend = L"Legend1";
+				 series8->MarkerSize = 10;
+				 series8->Name = L"Series_Radar_Angle";
+				 series9->ChartArea = L"ChartArea1";
+				 series9->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+				 series9->Legend = L"Legend1";
+				 series9->MarkerColor = System::Drawing::SystemColors::MenuHighlight;
+				 series9->MarkerSize = 10;
+				 series9->MarkerStyle = System::Windows::Forms::DataVisualization::Charting::MarkerStyle::Star4;
+				 series9->Name = L"Series_TBox_LRadar";
+				 series10->ChartArea = L"ChartArea1";
+				 series10->ChartType = System::Windows::Forms::DataVisualization::Charting::SeriesChartType::Point;
+				 series10->Color = System::Drawing::Color::Black;
+				 series10->Legend = L"Legend1";
+				 series10->MarkerSize = 10;
+				 series10->Name = L"Series_TBox_RRadar";
+				 this->chart1->Series->Add(series6);
+				 this->chart1->Series->Add(series7);
+				 this->chart1->Series->Add(series8);
+				 this->chart1->Series->Add(series9);
+				 this->chart1->Series->Add(series10);
 				 this->chart1->Size = System::Drawing::Size(1200, 600);
 				 this->chart1->TabIndex = 8;
 				 this->chart1->Text = L"¹Ï";
@@ -743,6 +749,15 @@ namespace WinForm_SSR_System_Angle {
 				 // 
 				 this->serialPort_Tbox->DataReceived += gcnew System::IO::Ports::SerialDataReceivedEventHandler(this, &MyForm::serialPort_Tbox_DataReceived);
 				 // 
+				 // tx_TBox_LAngle
+				 // 
+				 this->tx_TBox_LAngle->AutoSize = true;
+				 this->tx_TBox_LAngle->Location = System::Drawing::Point(323, 591);
+				 this->tx_TBox_LAngle->Name = L"tx_TBox_LAngle";
+				 this->tx_TBox_LAngle->Size = System::Drawing::Size(39, 12);
+				 this->tx_TBox_LAngle->TabIndex = 10;
+				 this->tx_TBox_LAngle->Text = L"label12";
+				 // 
 				 // MyForm
 				 // 
 				 this->AutoScaleDimensions = System::Drawing::SizeF(6, 12);
@@ -836,15 +851,15 @@ namespace WinForm_SSR_System_Angle {
 				TBox.L_RADAR_Mode = bTboxData[14];
 				TBox.L_RADAR_ALert = bTboxData[15];
 				TBox.L_RADAR_Range = bTboxData[16];
-				TBox.L_RADAR_Speed = bTboxData[17] - 127;
-				TBox.L_RADAR_Angle = bTboxData[18];// -127;
+				TBox.L_RADAR_Speed = bTboxData[17] -127;
+				TBox.L_RADAR_Angle = bTboxData[18] -127;
 
 
 				TBox.R_RADAR_Mode = bTboxData[19];
 				TBox.R_RADAR_ALert = bTboxData[20];
 				TBox.R_RADAR_Range = bTboxData[21];
-				TBox.R_RADAR_Speed = bTboxData[22] - 127;
-				TBox.R_RADAR_Angle = bTboxData[23];// -127;
+				TBox.R_RADAR_Speed = bTboxData[22] -127;
+				TBox.R_RADAR_Angle = bTboxData[23] -127;
 			}
 
 		}
@@ -934,7 +949,7 @@ namespace WinForm_SSR_System_Angle {
 		lbBsdAngleT->Text = Math::Round(bsdAngle, 2).ToString();
 		
 		
-		vector<Pt> Pt_average;
+		cv::vector<Pt> Pt_average;
 		if (f_getLiDARData)
 		{
 			LIDAR_cooridate.resize(361);
@@ -943,7 +958,7 @@ namespace WinForm_SSR_System_Angle {
 				LIDAR_cooridate[i] = Pt(LIDAR_X_cooridate[i], LIDAR_Y_cooridate[i]);
 				chart1->Series["Series_LiDAR"]->Points->AddXY(LIDAR_X_cooridate[i], LIDAR_Y_cooridate[i]);
 			}
-			vector<int>Lab;
+			cv::vector<int>Lab;
 			int NoObj = partition(LIDAR_cooridate, Lab);
 
 			Pt_average.resize(NoObj);
@@ -1004,25 +1019,32 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_Radar_Angle"]->Points->AddXY(Radar_Angle_Point.x, Radar_Angle_Point.y);
 		if (TBox.R_RADAR_ALert)
 		{
-			//fstream fp;
-			//fp.open("R_RadarData.txt", ios::out |ios::app);
-			//fp << TBox.R_RADAR_Range <<  " " << TBox.R_RADAR_Angle <<" "<< bsdAngle << endl;
-			//fp.close();
-			//TBox.R_RADAR_Angle = TBox.R_RADAR_Angle - 90;
+			fstream fp;
+			fp.open("R_RadarData.txt", ios::out |ios::app);
+			fp << TBox.R_RADAR_Range <<  " " << TBox.R_RADAR_Angle <<" "<< bsdAngle << endl;
+			fp.close();
+		
 			Pt R_RadarPtAtLiDAR = R_Radar2LiDAR(Pt(100 * TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle*M_PI / 180.f), 100 * TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle*M_PI / 180.f)));
-			label9->Text = TBox.R_RADAR_Angle.ToString();
+			tx_TBox_RAngle->ForeColor = Color::Red;
+			tx_TBox_RAngle->Text = "R Angle: "+TBox.R_RADAR_Angle.ToString();
 			chart1->Series["Series_TBox_RRadar"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
 		}
+		else
+			tx_TBox_RAngle->ForeColor = Color::CadetBlue;
+		
 		if (TBox.L_RADAR_ALert)
 		{
-			//fstream fp;
-			//fp.open("L_RadarData.txt", ios::out);
-			//fp << TBox.L_RADAR_Range << " " << TBox.L_RADAR_Speed << " " << TBox.L_RADAR_Angle << endl;
-			//fp.close();
-			//TBox.L_RADAR_Angle = TBox.L_RADAR_Angle - 90;
+			fstream fp;
+			fp.open("L_RadarData.txt", ios::out | ios::app);
+			fp << TBox.L_RADAR_Range << " " << TBox.L_RADAR_Speed << " " << TBox.L_RADAR_Angle << endl;
+			fp.close();
+			tx_TBox_LAngle->ForeColor = Color::Red;
+			tx_TBox_LAngle->Text = "R Angle: " + TBox.L_RADAR_Angle.ToString();
 			Pt L_RadarPtAtLiDAR = L_Radar2LiDAR(Pt(100 * TBox.L_RADAR_Range*Math::Cos(TBox.L_RADAR_Angle*M_PI / 180.f), 100 * TBox.L_RADAR_Range*Math::Sin(TBox.L_RADAR_Angle*M_PI / 180.f)));
 			chart1->Series["Series_TBox_LRadar"]->Points->AddXY(L_RadarPtAtLiDAR.x, L_RadarPtAtLiDAR.y);
 		}
+		else
+			tx_TBox_LAngle->ForeColor = Color::Blue;
 
 		Tx_CarSpeed->Text = TBox.currentSpeed.ToString();
 		Tx_Radar_Mode->Text = "L:" + getRadarMode(TBox.L_RADAR_Mode) + "  R:" + getRadarMode(TBox.R_RADAR_Mode);
@@ -1144,8 +1166,8 @@ namespace WinForm_SSR_System_Angle {
 		tx_LRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
 		tx_LRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
 		f_getLRadarBias = true;
-		fstream fp;
-		fp.open("LBias.txt", ios::out);
+		std::fstream fp;
+		fp.open("LBias.txt", std::ios::out);
 		fp << left_Radar_bias.x << " " << left_Radar_bias.y;
 		fp.close();
 		ckBox_RadarR->Checked = true;
@@ -1159,8 +1181,8 @@ namespace WinForm_SSR_System_Angle {
 		tx_RRadarBias_X->Text = Math::Round(right_Radar_bias.x, 2).ToString();
 		tx_RRadarBias_Y->Text = Math::Round(right_Radar_bias.y, 2).ToString();
 		f_getRRadarBias = true;
-		fstream fp;
-		fp.open("RBias.txt", ios::out);
+		std::fstream fp;
+		fp.open("RBias.txt", std::ios::out);
 		fp << right_Radar_bias.x << " " << right_Radar_bias.y;
 		fp.close();
 	}
@@ -1186,7 +1208,7 @@ namespace WinForm_SSR_System_Angle {
 	{
 		return ((P1.x - P2.x)*(P1.x - P2.x) + (P1.y - P2.y)*(P1.y - P2.y)) <= 100;
 	}
-	private:int partition(vector<Pt>& _vec, vector<int>& labels)
+	private:int partition(cv::vector<Pt>& _vec, cv::vector<int>& labels)
 	{
 		int i, j, N = _vec.size();
 		const Pt* vec = &_vec[0];
@@ -1194,7 +1216,7 @@ namespace WinForm_SSR_System_Angle {
 		const int PARENT = 0;
 		const int RANK = 1;
 
-		vector<int> _nodes(N * 2);
+		cv::vector<int> _nodes(N * 2);
 		int(*nodes)[2] = (int(*)[2])&_nodes[0];
 
 		for (i = 0; i < N; i++)
@@ -1270,12 +1292,12 @@ namespace WinForm_SSR_System_Angle {
 #pragma endregion
 	private:void LoadData()
 	{
-		fstream fp;
-		fp.open("RBias.txt", ios::in);
+		std::fstream fp;
+		fp.open("LBias.txt", std::ios::in);
 		fp >> left_Radar_bias.x;
 		fp >> left_Radar_bias.y;
 		fp.close();
-		fp.open("LBias.txt", ios::in);
+		fp.open("RBias.txt", std::ios::in);
 		fp >> right_Radar_bias.x;
 		fp >> right_Radar_bias.y;
 		fp.close();
