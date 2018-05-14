@@ -19,4 +19,13 @@ public:
 	int L_RADAR_Angle;
 
 };
+class Radar
+ {
+ public:
+	 int Mode;
+	 int ALert;
+	 int Range;
+	 int Speed;
+	 int Angle;
+ };
 
