@@ -6,5 +6,6 @@ public:
 	Pt(double _x, double _y);
 	double x;
 	double y;
+	double velcity;
 };
 

@@ -30,16 +30,17 @@ namespace WinForm_SSR_System_Angle {
 	CTBox TBox;
 	Radar RadarData;
 	double PartitionValue = 0;
+	vector<Pt>Pt_OldCluster;
 	Pt LiDAR_tmpPt = Pt(0, 0);
 	Pt left_Radar_bias;
 	Pt right_Radar_bias;
 	Pt AngleRadar_Point;
 	double LIDAR_X_cooridate[361];
 	double LIDAR_Y_cooridate[361];
-	
+
 	cv::Size videoSize;
-	char RRadarFileName[30] = {0};
-	char LRadarFileName[30] = {0};
+	char RRadarFileName[30] = { 0 };
+	char LRadarFileName[30] = { 0 };
 
 	/// <summary>
 	/// MyForm 的摘要
@@ -57,7 +58,7 @@ namespace WinForm_SSR_System_Angle {
 			sprintf(RRadarFileName, ".\\Data\\Passenger%d.txt", Date);
 			sprintf(LRadarFileName, ".\\Data\\Driver%d.txt", Date);
 			targetDistant = Convert::ToDouble(txBox_targetDistant->Text) * 100;
-			PartitionValue=Convert::ToDouble(tBox_Partition->Text) * 100;
+			PartitionValue = Convert::ToDouble(tBox_Partition->Text) * 100;
 			ComPortRefresh();
 			timer1->Interval = 20;
 			timer1->Start();
@@ -162,28 +163,21 @@ namespace WinForm_SSR_System_Angle {
 
 	private: System::Windows::Forms::Button^  Btn_Radar_Connect;
 	private: System::Windows::Forms::ComboBox^  cBox_Radar;
-
 	private: System::IO::Ports::SerialPort^  serialPort_Radar;
 	private: System::Windows::Forms::Label^  label9;
-private: System::Windows::Forms::CheckBox^  cBox_Record;
-private: System::Windows::Forms::GroupBox^  groupBox7;
-private: System::Windows::Forms::TextBox^  tBox_Partition;
-private: System::Windows::Forms::GroupBox^  groupBox6;
+	private: System::Windows::Forms::CheckBox^  cBox_Record;
+	private: System::Windows::Forms::GroupBox^  groupBox7;
+	private: System::Windows::Forms::TextBox^  tBox_Partition;
+	private: System::Windows::Forms::GroupBox^  groupBox6;
 
-
-
-
-
-private: System::Windows::Forms::Label^  label15;
-private: System::Windows::Forms::Label^  label6;
-private: System::Windows::Forms::Label^  label3;
-private: System::Windows::Forms::TextBox^  txBox_targetDistant;
-private: System::Windows::Forms::TextBox^  txBox_AlphaBias;
-private: System::Windows::Forms::Label^  label1;
-private: System::Windows::Forms::Label^  label12;
-private: System::Windows::Forms::Button^  Btn_UpDateSetting;
-
-
+	private: System::Windows::Forms::Label^  label15;
+	private: System::Windows::Forms::Label^  label6;
+	private: System::Windows::Forms::Label^  label3;
+	private: System::Windows::Forms::TextBox^  txBox_targetDistant;
+	private: System::Windows::Forms::TextBox^  txBox_AlphaBias;
+	private: System::Windows::Forms::Label^  label1;
+	private: System::Windows::Forms::Label^  label12;
+	private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 	private: System::IO::Ports::SerialPort^  serialPort_Radar_Angle;
 #pragma endregion
 
@@ -1037,9 +1031,9 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 			{
 				RadarData.ALert = Radar_buff[1];
 				RadarData.Mode = Radar_buff[3];
-				RadarData.Range= Radar_buff[8];
-				RadarData.Speed = Radar_buff[9]-127;
-				RadarData.Angle = Radar_buff[10]-127;
+				RadarData.Range = Radar_buff[8];
+				RadarData.Speed = Radar_buff[9] - 127;
+				RadarData.Angle = Radar_buff[10] - 127;
 			}
 		}
 	}
@@ -1107,14 +1101,14 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 				TBox.L_RADAR_Mode = bTboxData[14];
 				TBox.L_RADAR_ALert = bTboxData[15];
 				TBox.L_RADAR_Range = bTboxData[16];
-				TBox.L_RADAR_Speed = bTboxData[17]-127;//- 127;
-				TBox.L_RADAR_Angle = bTboxData[18]-127;// -127;
+				TBox.L_RADAR_Speed = bTboxData[17] - 127;//- 127;
+				TBox.L_RADAR_Angle = bTboxData[18] - 127;// -127;
 
 				TBox.R_RADAR_Mode = bTboxData[19];
 				TBox.R_RADAR_ALert = bTboxData[20];
 				TBox.R_RADAR_Range = bTboxData[21];
-				TBox.R_RADAR_Speed = bTboxData[22]-127;//- 127;
-				TBox.R_RADAR_Angle = bTboxData[23]-127;// -127;
+				TBox.R_RADAR_Speed = bTboxData[22] - 127;//- 127;
+				TBox.R_RADAR_Angle = bTboxData[23] - 127;// -127;
 			}
 
 		}
@@ -1244,8 +1238,8 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 			chart1->Series["Series_TBox_RRadar"]->Points->Clear();
 			chart1->Series["Series_TBox_LRadar"]->Points->Clear();
 		}
-		
-		
+
+
 #pragma region 光達
 		if (f_getLiDARData)
 		{
@@ -1257,31 +1251,24 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 			}
 			cv::vector<int>Lab;
 			int NoObj = partition(LIDAR_cooridate, Lab);
-			cv::vector<Pt> Pt_average;
-			Pt_average = CaculateAveragePoint(LIDAR_cooridate, Lab, NoObj);
-			Pt P;
-			double minDistant = 8000000;
-			for (uint i = 0; i < Pt_average.size(); i++)
-			{
-				double distant = pow(Pt_average[i].x, 2) + pow(Pt_average[i].y, 2);
-				if (distant < minDistant && (distant != 0))
-				{
-					minDistant = distant;
-					P = Pt_average[i];
-				}
-			}
+			vector<Pt> Pt_NewCluster = CaculateAveragePoint(LIDAR_cooridate, Lab, NoObj);
+			if (Pt_OldCluster.size() == 0)Pt_OldCluster.resize(Pt_NewCluster.size());
 			time_t t2 = clock();
 			float time = (float)(t2 - t1) / CLK_TCK;
-			double speed = sqrt(pow(P.x - LiDAR_tmpPt.x, 2) + pow(P.y - LiDAR_tmpPt.y, 2)) / time;
+			FindClosePoint(Pt_NewCluster, Pt_OldCluster,time);
+		
 			t1 = t2;
-			LiDAR_tmpPt = P;
-
-			chart1->Series["Series_LiDAR_CLOSE"]->Points->AddXY(P.x, P.y);
-			chart1->Series["Series_LiDAR_CLOSE"]->Label = "(" + Math::Round(P.x, 2).ToString() + " , " + Math::Round(P.y, 2).ToString() + " , " + Math::Round(speed, 2).ToString() + ")";
+			Pt_OldCluster = Pt_NewCluster;
+			for (uint i = 0; i < Pt_NewCluster.size(); i++)
+			{
+				chart1->Series["Series_LiDAR_CLOSE"]->Points->AddXY(Pt_NewCluster[i].x, Pt_NewCluster[i].y);
+				chart1->Series["Series_LiDAR_CLOSE"]->Label = "(" + Math::Round(Pt_NewCluster[i].x, 2).ToString() + " , " + Math::Round(Pt_NewCluster[i].y, 2).ToString() + " , " + Math::Round(Pt_NewCluster[i].velcity, 2).ToString() + ")";
+			}
+			
 		}
 #pragma endregion
 
-		
+
 #pragma region 純角度的雷達
 		if (serialPort_Radar_Angle->IsOpen)
 		{
@@ -1307,7 +1294,7 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 #pragma region TBox
 		if (serialPort_Tbox->IsOpen)
 		{
-			if (TBox.R_RADAR_ALert )
+			if (TBox.R_RADAR_ALert)
 			{
 				fstream fp;
 				fp.open(RRadarFileName, ios::out | ios::app);
@@ -1318,12 +1305,12 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 				tx_TBox_RAngle->ForeColor = Color::Red;
 				tx_TBox_RAngle->Text = "R Range: " + TBox.R_RADAR_Range.ToString() + " R Angle: " + TBox.R_RADAR_Angle.ToString();
 				chart1->Series["Series_TBox_RRadar"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
-				
+
 			}
 			else
 				tx_TBox_RAngle->ForeColor = Color::Blue;
 
-			if (TBox.L_RADAR_ALert )
+			if (TBox.L_RADAR_ALert)
 			{
 				fstream fp;
 				fp.open(LRadarFileName, ios::out | ios::app);
@@ -1359,7 +1346,7 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 #pragma endregion	
 		chart1->Refresh();
 	}
-   delegate void SetLabel(System::String^ str);
+			 delegate void SetLabel(System::String^ str);
 	private:void SetLabelText(System::String^ str)
 	{
 		if (this->lbBsdAngleT->InvokeRequired)
@@ -1471,9 +1458,9 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 		cli::array<byte>^ cmd = gcnew cli::array<System::Byte>{ 0x80, 0x64, 0xA1, 0x1F, 0x7C, 0x00, 0x00, 0xAB, 0xFD, 0x01, 0x00, 0xC9};
 		serialPort_Radar_Angle->Write(cmd, 0, 12);
 	}
-    private: System::Void Btn_UpDateSetting_Click(System::Object^  sender, System::EventArgs^  e) {
+	private: System::Void Btn_UpDateSetting_Click(System::Object^  sender, System::EventArgs^  e) {
 		targetDistant = Convert::ToDouble(txBox_targetDistant->Text) * 100;
-	    PartitionValue = Convert::ToDouble(tBox_Partition->Text) * 100;
+		PartitionValue = Convert::ToDouble(tBox_Partition->Text) * 100;
 	}
 	private: System::Void Btn_RadarAngle_DisConnect_Click(System::Object^  sender, System::EventArgs^  e) {
 		chart1->Series["Series_Radar_Angle"]->Points->Clear();
@@ -1513,7 +1500,7 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 #pragma region 聚類
 	private:bool predicate(Pt P1, Pt P2)
 	{
-		double distant = Math::Sqrt(Math::Pow((P1.x - P2.x),2)+Math::Pow((P1.y - P2.y),2));
+		double distant = Math::Sqrt(Math::Pow((P1.x - P2.x), 2) + Math::Pow((P1.y - P2.y), 2));
 		return  distant <= PartitionValue;
 	}
 	private:int partition(cv::vector<Pt>& _vec, cv::vector<int>& labels)
@@ -1597,7 +1584,7 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 		}
 		return nclasses;
 	}
-	private:vector<Pt> CaculateAveragePoint(vector<Pt>&XYcord,vector<int> &PointLab,int NoObj)
+	private:vector<Pt> CaculateAveragePoint(vector<Pt>&XYcord, vector<int> &PointLab, int NoObj)
 	{
 		vector<Pt>averagePoint;
 		for (uint i = 0; i < NoObj; i++)
@@ -1622,6 +1609,23 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 		}
 		return averagePoint;
 	}
+	private:void FindClosePoint(vector<Pt>&NewPoints, vector<Pt>&oldPoints, double timeInterval)
+	{
+		for (uint i = 0; i < NewPoints.size(); i++)
+		{
+			double minDistant = 8000000;
+			double distant;
+			for (uint j = 0; j < oldPoints.size(); j++)
+			{
+				distant = sqrt(pow(NewPoints[i].x-oldPoints[j].x, 2) + pow(NewPoints[i].y - oldPoints[j].y, 2));
+				if (distant < minDistant)
+				{
+					minDistant = distant;
+				}
+			}
+			NewPoints[i].velcity = distant / timeInterval;
+		}
+	}
 #pragma endregion
 	private:void LoadData()
 	{
@@ -1640,6 +1644,6 @@ private: System::Windows::Forms::Button^  Btn_UpDateSetting;
 		tx_RRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
 	}
 
-	
-};
+
+	};
 }
