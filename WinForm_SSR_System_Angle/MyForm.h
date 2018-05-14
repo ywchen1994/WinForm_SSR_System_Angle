@@ -30,8 +30,8 @@ namespace WinForm_SSR_System_Angle {
 	CTBox TBox;
 	Radar RadarData;
 	double PartitionValue = 0;
-	vector<Pt>Pt_OldCluster;
-	Pt LiDAR_tmpPt = Pt(0, 0);
+	vector<Pt>Pt_oldCluster;
+	//Pt LiDAR_tmpPt = Pt(0, 0);
 	Pt left_Radar_bias;
 	Pt right_Radar_bias;
 	Pt AngleRadar_Point;
@@ -55,8 +55,8 @@ namespace WinForm_SSR_System_Angle {
 			//TODO:  在此加入建構函式程式碼
 			//
 			int Date = System::DateTime::Now.Day * 10000 + System::DateTime::Now.Hour * 100 + System::DateTime::Now.Minute;
-			sprintf(RRadarFileName, ".\\Data\\Passenger%d.txt", Date);
-			sprintf(LRadarFileName, ".\\Data\\Driver%d.txt", Date);
+			sprintf(RRadarFileName, ".\\Data\\Passenger%d.csv", Date);
+			sprintf(LRadarFileName, ".\\Data\\Driver%d.csv", Date);
 			targetDistant = Convert::ToDouble(txBox_targetDistant->Text) * 100;
 			PartitionValue = Convert::ToDouble(tBox_Partition->Text) * 100;
 			ComPortRefresh();
@@ -1233,6 +1233,7 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_LiDAR"]->Points->Clear();
 		chart1->Series["Series_LiDAR_CLOSE"]->Points->Clear();
 		chart1->Series["Series_Radar_Angle"]->Points->Clear();
+		vector<Pt> Pt_newCluster;
 		if (!cBox_Record->Checked)
 		{
 			chart1->Series["Series_TBox_RRadar"]->Points->Clear();
@@ -1251,18 +1252,18 @@ namespace WinForm_SSR_System_Angle {
 			}
 			cv::vector<int>Lab;
 			int NoObj = partition(LIDAR_cooridate, Lab);
-			vector<Pt> Pt_NewCluster = CaculateAveragePoint(LIDAR_cooridate, Lab, NoObj);
-			if (Pt_OldCluster.size() == 0)Pt_OldCluster.resize(Pt_NewCluster.size());
+			 Pt_newCluster = CaculateAveragePoint(LIDAR_cooridate, Lab, NoObj);
+			if (Pt_oldCluster.size() == 0)Pt_oldCluster.resize(Pt_newCluster.size());
 			time_t t2 = clock();
 			float time = (float)(t2 - t1) / CLK_TCK;
-			FindClosePoint(Pt_NewCluster, Pt_OldCluster,time);
+			FindClosePoint(Pt_newCluster, Pt_oldCluster,time);
 		
 			t1 = t2;
-			Pt_OldCluster = Pt_NewCluster;
-			for (uint i = 0; i < Pt_NewCluster.size(); i++)
+			Pt_oldCluster = Pt_newCluster;
+			for (uint i = 0; i < Pt_newCluster.size(); i++)
 			{
-				chart1->Series["Series_LiDAR_CLOSE"]->Points->AddXY(Pt_NewCluster[i].x, Pt_NewCluster[i].y);
-				chart1->Series["Series_LiDAR_CLOSE"]->Label = "(" + Math::Round(Pt_NewCluster[i].x, 2).ToString() + " , " + Math::Round(Pt_NewCluster[i].y, 2).ToString() + " , " + Math::Round(Pt_NewCluster[i].velcity, 2).ToString() + ")";
+				chart1->Series["Series_LiDAR_CLOSE"]->Points->AddXY(Pt_newCluster[i].x, Pt_newCluster[i].y);
+				chart1->Series["Series_LiDAR_CLOSE"]->Label = "(" + Math::Round(Pt_newCluster[i].x, 2).ToString() + " , " + Math::Round(Pt_newCluster[i].y, 2).ToString() + " , " + Math::Round(Pt_newCluster[i].velcity, 2).ToString() + ")";
 			}
 			
 		}
@@ -1296,13 +1297,30 @@ namespace WinForm_SSR_System_Angle {
 		{
 			if (TBox.R_RADAR_ALert)
 			{
-				fstream fp;
-				fp.open(RRadarFileName, ios::out | ios::app);
-				fp << LiDAR_tmpPt.x << " " << LiDAR_tmpPt.y << " " << TBox.R_RADAR_Range << " " << TBox.R_RADAR_Angle << " " << TBox.R_RADAR_Speed << endl;
-				fp.close();
+			
 
 				Pt R_RadarPtAtLiDAR = R_Radar2LiDAR(Pt(100 * TBox.R_RADAR_Range*Math::Cos(TBox.R_RADAR_Angle*M_PI / 180.f), 100 * TBox.R_RADAR_Range*Math::Sin(TBox.R_RADAR_Angle*M_PI / 180.f)));
 				tx_TBox_RAngle->ForeColor = Color::Red;
+
+				double minDistant = 8000000;
+				double distant;
+				Pt closetPt;
+				for (uint i = 0; i < Pt_newCluster.size(); i++)
+				{
+					distant = sqrt(pow(Pt_newCluster[i].x - R_RadarPtAtLiDAR.x, 2) + pow(Pt_newCluster[i].y - R_RadarPtAtLiDAR.y, 2));
+					if (distant < minDistant)
+					{
+						minDistant = distant;
+						closetPt = Pt_newCluster[i];
+					}
+				}
+
+				fstream fp;
+				fp.open(RRadarFileName, ios::out | ios::app);
+				fp << closetPt.x << ",/t" << closetPt.y << ",/t" << closetPt.velcity<< ",/t" << TBox.R_RADAR_Range << ",/t" << TBox.R_RADAR_Angle << ",/t" << TBox.R_RADAR_Speed << endl;
+				fp.close();
+
+
 				tx_TBox_RAngle->Text = "R Range: " + TBox.R_RADAR_Range.ToString() + " R Angle: " + TBox.R_RADAR_Angle.ToString();
 				chart1->Series["Series_TBox_RRadar"]->Points->AddXY(R_RadarPtAtLiDAR.x, R_RadarPtAtLiDAR.y);
 
@@ -1312,13 +1330,26 @@ namespace WinForm_SSR_System_Angle {
 
 			if (TBox.L_RADAR_ALert)
 			{
-				fstream fp;
-				fp.open(LRadarFileName, ios::out | ios::app);
-				fp << LiDAR_tmpPt.x << " " << LiDAR_tmpPt.y << " " << TBox.L_RADAR_Range << " " << TBox.L_RADAR_Angle << " " << TBox.L_RADAR_Speed << endl;
-				fp.close();
+				
 				tx_TBox_LAngle->ForeColor = Color::Red;
 				tx_TBox_LAngle->Text = "L Range: " + TBox.L_RADAR_Range.ToString() + " L Angle: " + TBox.L_RADAR_Angle.ToString();
 				Pt L_RadarPtAtLiDAR = L_Radar2LiDAR(Pt(100 * TBox.L_RADAR_Range*Math::Cos(TBox.L_RADAR_Angle*M_PI / 180.f), 100 * TBox.L_RADAR_Range*Math::Sin(TBox.L_RADAR_Angle*M_PI / 180.f)));
+				double minDistant = 8000000;
+				double distant;
+				Pt closetPt;
+				for (uint i = 0; i < Pt_newCluster.size(); i++)
+				{
+					distant = sqrt(pow(Pt_newCluster[i].x - L_RadarPtAtLiDAR.x, 2) + pow(Pt_newCluster[i].y - L_RadarPtAtLiDAR.y, 2));
+					if (distant < minDistant)
+					{
+						minDistant = distant;
+						closetPt = Pt_newCluster[i];
+					}
+				}
+				fstream fp;
+				fp.open(LRadarFileName, ios::out | ios::app);
+				fp << closetPt.x << ",/t" << closetPt.y << ",/t"<< closetPt.velcity << ",/t" << TBox.L_RADAR_Range << ",/t" << TBox.L_RADAR_Angle << ",/t" << TBox.L_RADAR_Speed << endl;
+				fp.close();
 				chart1->Series["Series_TBox_LRadar"]->Points->AddXY(L_RadarPtAtLiDAR.x, L_RadarPtAtLiDAR.y);
 			}
 			else
@@ -1468,8 +1499,19 @@ namespace WinForm_SSR_System_Angle {
 	}
 	private: System::Void Btn_LeftBias_Click(System::Object^  sender, System::EventArgs^  e) {
 		Pt Rotation = CoordinateRotation(-35.0f, AngleRadar_Point);
-		left_Radar_bias.x = LiDAR_tmpPt.x - Rotation.y;
-		left_Radar_bias.y = LiDAR_tmpPt.y - Rotation.x;
+		double minDistant = 8000000;
+		double distant;
+		Pt closetPt;
+		for (uint i = 0; i < Pt_oldCluster.size(); i++)
+		{
+			distant = sqrt(pow(Pt_oldCluster[i].x, 2) + pow(Pt_oldCluster[i].y, 2));
+			if (distant < minDistant)
+			{
+				minDistant = distant;
+				left_Radar_bias.x = Pt_oldCluster[i].x - Rotation.y;
+				left_Radar_bias.y = Pt_oldCluster[i].y - Rotation.x;
+			}
+		}
 
 
 		tx_LRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
@@ -1482,11 +1524,21 @@ namespace WinForm_SSR_System_Angle {
 		ckBox_RadarR->Checked = false;
 	}
 	private: System::Void Btn_RightBias_Click(System::Object^  sender, System::EventArgs^  e) {
-
 		ckBox_RadarR->Checked = true;
 		Pt Rotation = CoordinateRotation(-125.0f, AngleRadar_Point);
-		right_Radar_bias.x = LiDAR_tmpPt.x - Rotation.x;
-		right_Radar_bias.y = LiDAR_tmpPt.y - Rotation.y;
+		double minDistant = 8000000;
+		double distant;
+		Pt closetPt;
+		for (uint i = 0; i < Pt_oldCluster.size(); i++)
+		{
+			distant = sqrt(pow(Pt_oldCluster[i].x, 2) + pow(Pt_oldCluster[i].y, 2));
+			if (distant < minDistant)
+			{
+				minDistant = distant;
+				right_Radar_bias.x = Pt_oldCluster[i].x - Rotation.y;
+				right_Radar_bias.y = Pt_oldCluster[i].y - Rotation.x;
+			}
+		}
 		tx_RRadarBias_X->Text = Math::Round(right_Radar_bias.x, 2).ToString();
 		tx_RRadarBias_Y->Text = Math::Round(right_Radar_bias.y, 2).ToString();
 		f_getRRadarBias = true;
@@ -1643,7 +1695,18 @@ namespace WinForm_SSR_System_Angle {
 		tx_RRadarBias_X->Text = Math::Round(left_Radar_bias.x, 2).ToString();
 		tx_RRadarBias_Y->Text = Math::Round(left_Radar_bias.y, 2).ToString();
 	}
+	private:void CreatNewTxt()
+	{
+		fstream fp;
+		fp.open(LRadarFileName, ios::out | ios::app);
+		fp <<"LiDAR X"<< ",/t" << "LiDAR Y" << ",/t" <<"LiDAR Velcity" << ",/t" << "TBox Driver Range" << ",/t" << "TBox Driver Angle" << ",/t" << "TBox Driver Speed" << endl;
+		fp.close();
 
+		fstream fp;
+		fp.open(LRadarFileName, ios::out | ios::app);
+		fp << "LiDAR X" << ",/t" << "LiDAR Y" << ",/t" << "LiDAR Velcity" << ",/t" << "TBox Passenger Range" << ",/t" << "TBox Passenger Angle" << ",/t" << "TBox Passenger Speed" << endl;
+		fp.close();
+	}
 
 	};
 }
