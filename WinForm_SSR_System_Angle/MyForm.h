@@ -57,6 +57,7 @@ namespace WinForm_SSR_System_Angle {
 			int Date = System::DateTime::Now.Day * 10000 + System::DateTime::Now.Hour * 100 + System::DateTime::Now.Minute;
 			sprintf(RRadarFileName, ".\\Data\\Passenger%d.csv", Date);
 			sprintf(LRadarFileName, ".\\Data\\Driver%d.csv", Date);
+			CreatNewTxt();
 			targetDistant = Convert::ToDouble(txBox_targetDistant->Text) * 100;
 			PartitionValue = Convert::ToDouble(tBox_Partition->Text) * 100;
 			ComPortRefresh();
@@ -1234,13 +1235,12 @@ namespace WinForm_SSR_System_Angle {
 		chart1->Series["Series_LiDAR_CLOSE"]->Points->Clear();
 		chart1->Series["Series_Radar_Angle"]->Points->Clear();
 		vector<Pt> Pt_newCluster;
+		
 		if (!cBox_Record->Checked)
 		{
 			chart1->Series["Series_TBox_RRadar"]->Points->Clear();
 			chart1->Series["Series_TBox_LRadar"]->Points->Clear();
 		}
-
-
 #pragma region 光達
 		if (f_getLiDARData)
 		{
@@ -1670,12 +1670,17 @@ namespace WinForm_SSR_System_Angle {
 			for (uint j = 0; j < oldPoints.size(); j++)
 			{
 				distant = sqrt(pow(NewPoints[i].x-oldPoints[j].x, 2) + pow(NewPoints[i].y - oldPoints[j].y, 2));
-				if (distant < minDistant)
+				if ((distant < minDistant) )
 				{
 					minDistant = distant;
 				}
 			}
-			NewPoints[i].velcity = distant / timeInterval;
+			if(minDistant <50) //時速低於90Km/hr
+			   NewPoints[i].velcity = distant / timeInterval;
+			else
+			{
+				NewPoints[i].velcity = 0;
+			}
 		}
 	}
 #pragma endregion
@@ -1702,8 +1707,7 @@ namespace WinForm_SSR_System_Angle {
 		fp <<"LiDAR X"<< ",/t" << "LiDAR Y" << ",/t" <<"LiDAR Velcity" << ",/t" << "TBox Driver Range" << ",/t" << "TBox Driver Angle" << ",/t" << "TBox Driver Speed" << endl;
 		fp.close();
 
-		fstream fp;
-		fp.open(LRadarFileName, ios::out | ios::app);
+		fp.open(RRadarFileName, ios::out | ios::app);
 		fp << "LiDAR X" << ",/t" << "LiDAR Y" << ",/t" << "LiDAR Velcity" << ",/t" << "TBox Passenger Range" << ",/t" << "TBox Passenger Angle" << ",/t" << "TBox Passenger Speed" << endl;
 		fp.close();
 	}
